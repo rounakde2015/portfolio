@@ -1,0 +1,99 @@
+{
+  "theme": "dark",
+  "archetype": "7 (Electric & Neon) tailored to 'Retro-Futurism / Cyber-Brutalism' blending with 'Swiss & High-Contrast'",
+  "design_philosophy": "Authoritative, technical, and polished. $15,000 hand-crafted feel. Generous whitespace, zero clutter, deep contrast. A showcase of precision and scale.",
+  "colors": {
+    "background": "#0A0A0A",
+    "surface": "#121212",
+    "surface_glass": "rgba(255, 255, 255, 0.02)",
+    "primary": "#00E5FF",
+    "primary_glow": "rgba(0, 229, 255, 0.2)",
+    "text_primary": "#F4F4F5",
+    "text_secondary": "#A1A1AA",
+    "border": "rgba(255, 255, 255, 0.08)",
+    "border_hover": "rgba(0, 229, 255, 0.5)"
+  },
+  "typography": {
+    "fonts": {
+      "heading": "Outfit, sans-serif",
+      "body": "Outfit, sans-serif",
+      "mono": "JetBrains Mono, monospace"
+    },
+    "hierarchy": {
+      "h1": "text-5xl md:text-7xl font-black tracking-tighter text-white",
+      "h2": "text-3xl md:text-5xl font-bold tracking-tight text-white",
+      "h3": "text-xl md:text-2xl font-semibold tracking-tight text-white",
+      "body": "text-base md:text-lg font-light leading-relaxed text-[#A1A1AA]",
+      "mono_label": "font-mono text-xs md:text-sm tracking-[0.2em] uppercase text-[#00E5FF]",
+      "tech_tag": "font-mono text-xs tracking-wider text-[#A1A1AA] bg-white/5 px-2 py-1"
+    },
+    "rules": [
+      "Headings must use tight letter spacing (tracking-tighter).",
+      "Overlines and labels must use JetBrains Mono, uppercase, wide tracking.",
+      "Never use Inter, Roboto, or standard sans-serifs for headings."
+    ]
+  },
+  "spacing_and_layout": {
+    "container": "max-w-6xl mx-auto px-6 md:px-12",
+    "section_spacing": "py-24 md:py-32",
+    "grid_patterns": {
+      "projects": "grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12",
+      "skills": "grid grid-cols-1 md:grid-cols-4 gap-6",
+      "experience_timeline": "border-l border-white/10 ml-4 md:ml-0 pl-8 md:pl-12 relative"
+    },
+    "rules": [
+      "Use massive spacing between sections (py-32) to let the content breathe.",
+      "Embrace asymmetry where possible (e.g., offset project cards)."
+    ]
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-[#00E5FF] text-[#0A0A0A] font-mono uppercase text-sm font-bold tracking-wider px-8 py-4 hover:shadow-[0_0_20px_rgba(0,229,255,0.4)] transition-all duration-300",
+      "secondary": "border border-white/20 text-white font-mono uppercase text-sm px-8 py-4 hover:border-[#00E5FF] hover:text-[#00E5FF] transition-all duration-300 backdrop-blur-md bg-white/5",
+      "icon_link": "text-white/60 hover:text-[#00E5FF] transition-colors duration-300"
+    },
+    "cards_projects": {
+      "base": "group relative bg-white/[0.02] border border-white/5 p-8 backdrop-blur-xl flex flex-col h-full overflow-hidden transition-colors duration-500 hover:border-white/20",
+      "hover_effect": "A subtle radial gradient glow of #00E5FF tracking the mouse cursor (or simply appearing on hover) behind the card."
+    },
+    "timeline_item": {
+      "dot": "absolute -left-[5px] top-2 w-[10px] h-[10px] bg-[#0A0A0A] border-2 border-[#00E5FF] shadow-[0_0_10px_rgba(0,229,255,0.5)]",
+      "content": "pb-12"
+    },
+    "contact_form": {
+      "input": "w-full bg-white/5 border border-white/10 p-4 text-white font-mono text-sm focus:border-[#00E5FF] focus:outline-none focus:ring-1 focus:ring-[#00E5FF]/50 transition-all placeholder-white/30"
+    }
+  },
+  "motion_and_interactions": {
+    "scroll": "Smooth scrolling mandatory (implement via Lenis or similar smooth scroll wrapper).",
+    "reveal": "Framer Motion staggered fade-up for timeline items and project cards. Initial y: 20, opacity: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] }.",
+    "hover_states": "Interactive elements must have explicit color shifts. Text links shift to #00E5FF.",
+    "micro_interactions": "Use 'Tracing Beam' or dynamic glowing border effects on the Hero section or key feature cards."
+  },
+  "media_and_assets": {
+    "profile_photo": {
+      "url": "https://images.pexels.com/photos/14259979/pexels-photo-14259979.jpeg",
+      "alt": "Alex Chen - Senior Software Engineer portrait in moody lighting",
+      "usage_rules": "Use heavily desaturated or grayscale with a subtle #00E5FF duotone or mixed blend mode to fit the dark tech aesthetic."
+    },
+    "project_abstracts": [
+      "https://images.unsplash.com/photo-1526289034009-0240ddb68ce3?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NjZ8MHwxfHNlYXJjaHwxfHxhYnN0cmFjdCUyMGRhcmslMjBtaW5pbWFsJTIwdGVjaCUyMGdlb21ldHJ5fGVufDB8fHx8MTc4MjQ2ODA5OXww&ixlib=rb-4.1.0&q=85",
+      "https://images.unsplash.com/photo-1638864616275-9f0b291a2eb6?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NjZ8MHwxfHNlYXJjaHw0fHxhYnN0cmFjdCUyMGRhcmslMjBtaW5pbWFsJTIwdGVjaCUyMGdlb21ldHJ5fGVufDB8fHx8MTc4MjQ2ODA5OXww&ixlib=rb-4.1.0&q=85",
+      "https://images.unsplash.com/photo-1532190872407-280735d27e08?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NjZ8MHwxfHNlYXJjaHwyfHxhYnN0cmFjdCUyMGRhcmslMjBtaW5pbWFsJTIwdGVjaCUyMGdlb21ldHJ5fGVufDB8fHx8MTc4MjQ2ODA5OXww&ixlib=rb-4.1.0&q=85",
+      "https://images.unsplash.com/photo-1660914256311-918659fae88f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NjZ8MHwxfHNlYXJjaHwzfHxhYnN0cmFjdCUyMGRhcmslMjBtaW5pbWFsJTIwdGVjaCUyMGdlb21ldHJ5fGVufDB8fHx8MTc4MjQ2ODA5OXww&ixlib=rb-4.1.0&q=85"
+    ],
+    "icons": "Use 'lucide-react' for crisp, minimalist UI icons. Ensure stroke-width is 1.5 for a sharp, refined look."
+  },
+  "testing_and_accessibility": {
+    "attributes": "All interactive and key informational elements MUST include a 'data-testid' attribute (e.g., 'data-testid=\"hero-cta-contact\"', 'data-testid=\"download-resume-button\"').",
+    "contrast": "Text contrast must meet APCA or WCAG AA standards. Ensure gray body text (#A1A1AA) against black (#0A0A0A) passes legibility checks."
+  },
+  "instructions_to_main_agent": [
+    "Install and use Google Fonts: 'Outfit' for main headings and 'JetBrains Mono' for monospace elements.",
+    "Do NOT use standard HTML inputs. Build the contact form with semantic inputs styled identically to Shadcn's minimalist dark inputs, or use Shadcn directly.",
+    "Build a custom pure HTML+Tailwind layout for the sections to guarantee E1's required generous spacing (e.g., gap-12, py-32).",
+    "For the Hero section, emphasize typography. The name 'Alex Chen' should be massive (h1). The tagline should be h2 or a very large, readable paragraph.",
+    "Do not use generic 'card' layouts for experience. The vertical timeline MUST be precise, using border-l and glowing cyan dots as specified.",
+    "Do NOT use placeholder texts or dummy images. Use the provided high-end abstract dark tech geometric images for project thumbnails."
+  ]
+}
