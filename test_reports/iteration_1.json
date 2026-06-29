@@ -1,0 +1,26 @@
+{
+  "summary": "First-finish smoke testing complete. Backend (4/4 endpoints) and Frontend (all sections + contact form) verified working. Resume PDF served correctly. Mobile viewport renders without overflow.",
+  "tested_scope": ["backend", "frontend", "integration"],
+  "passed": [
+    "GET /api/ returns 200 with {'message': 'Portfolio API online'}",
+    "POST /api/contact with valid payload returns 200 with status=success, id, email_sent=false (Resend testing mode - acceptable per spec)",
+    "POST /api/contact validation: missing fields -> 422, invalid email -> 422, empty strings -> 422",
+    "GET /api/contact returns 200 with array including the just-submitted message (sorted desc by timestamp)",
+    "GET /resume.pdf returns 200 with application/pdf content-type",
+    "Hero section shows 'Alex Chen', 'Senior Software Engineer', and both CTA buttons (hero-cta-work, hero-cta-contact)",
+    "All 5 nav links visible (about, skills, work, experience, contact) and clickable",
+    "About section download-resume-button links to /resume.pdf",
+    "Skills section renders 4 groups including Frontend, Backend, Databases, Cloud & DevOps",
+    "Projects section renders exactly 5 project cards",
+    "Experience timeline renders 4 items",
+    "Contact form valid submission shows success toast/feedback",
+    "Contact form empty submission shows validation error feedback",
+    "Mobile viewport (375x812) renders without horizontal overflow; hero visible"
+  ],
+  "failed": [],
+  "action_items": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "retest_needed": false,
+  "full_testing_deferred": true,
+  "notes": "Test data-testids for contact form inputs are 'contact-input-name/email/message' (not 'contact-name-input' as listed in review request) - this matched the actual implementation and tests passed. Resend email_sent=false expected in testing mode; message correctly persisted to MongoDB."
+}
