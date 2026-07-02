@@ -2,6 +2,7 @@ import "@/App.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
 import Portfolio from "@/components/Portfolio";
+import AdminPage from "@/components/admin/AdminPage";
 
 function App() {
   return (
@@ -10,6 +11,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Portfolio />} />
+          <Route path="/admin/messages" element={<AdminPage />} />
         </Routes>
       </BrowserRouter>
       <Toaster

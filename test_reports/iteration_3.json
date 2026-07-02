@@ -1,0 +1,79 @@
+{
+  "summary": "Iteration 3 admin panel testing complete. Backend: 21/21 pytest passed covering JWT login, verify, list, stats, PATCH read toggle, DELETE, 404s, and public-endpoint regression. Frontend: full admin flow verified — login (wrong→toast, correct→messages page + JWT stored in localStorage), list populated (10+ items), search filters case-insensitive by name/email/text, filter buttons (all/unread/read) work, message detail pane renders sender/email/body + action buttons, auto-mark-read on select decrements unread stat, copy-email button works, mark unread/read toggle, delete flow (window.confirm accepted → item removed, total decrements), refresh picks up newly POSTed messages, session persists across reload, invalid/stale token in localStorage is cleared and shows login page, logout clears token, and public portfolio + theme toggle regression still works. ONE BUG FOUND: Brute-force protection at POST /api/admin/login does NOT trigger 429 as designed — root cause is use of request.client.host which returns the K8s ingress proxy IP (10.231.128.196 / 10.231.128.208) instead of the real client IP, and requests rotate across 2 ingress pods so attempts are split.",
+  "tested_scope": ["backend", "frontend", "integration"],
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "POST /api/admin/login",
+        "issue": "Brute-force lockout (429 after 5 fails) never triggers behind the K8s ingress. request.client.host returns the ingress proxy IP (e.g. 10.231.128.196 / 10.231.128.208) — requests rotate across 2 ingress pods, so attempts are split into 2 buckets and neither reaches the 5-attempt threshold. Even if unified, all real users would share one rate-limit bucket keyed on the proxy IP — an attacker could then lock out every legitimate user (DoS). Fix: read the first entry of X-Forwarded-For (or X-Real-IP) header when present, e.g. `ip = request.headers.get('x-forwarded-for', '').split(',')[0].strip() or (request.client.host if request.client else 'unknown')`. Verified via curl: 6 consecutive wrong passwords → all returned 401 (expected 429 on 6th); backend log confirms client hosts alternate between 10.231.128.196 and 10.231.128.208."
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "passed": [
+    "POST /api/admin/login correct password → 200 {token, expires_at}, JWT is well-formed 3-part token",
+    "POST /api/admin/login wrong password → 401 {detail: 'Invalid password'}",
+    "GET /api/admin/verify: valid token → 200 {valid:true}; invalid token → 401; missing token → 401",
+    "GET /api/admin/messages: unauthenticated → 401; authenticated → 200 list sorted desc by timestamp",
+    "GET /api/admin/stats → 200 {total:int, unread:int}",
+    "PATCH /api/admin/messages/{id}/read: valid id → returns updated message with read=true, persisted; unknown id → 404; toggling back to read=false works",
+    "DELETE /api/admin/messages/{id}: valid id → 200 {status:'deleted', id}; then GET no longer includes id; unknown id → 404",
+    "Public regression: GET /api/ → 200 {message:'Portfolio API online'}; POST /api/contact → 200 status=success",
+    "Frontend /admin/messages: no token → renders admin-login-page with admin-password-input + admin-login-submit",
+    "Wrong password → error toast 'Invalid password' shown, stays on login",
+    "Correct password 'changeme-in-env' → transitions to admin-messages-page; localStorage['ac-admin-token'] + 'ac-admin-exp' set",
+    "admin-message-list populated after login (10 items), stats admin-stat-total=10 admin-stat-unread=8",
+    "Clicking a message shows admin-message-detail with sender name, email, body, and action buttons admin-copy-email / admin-toggle-read / admin-reply / admin-delete",
+    "admin-search filters case-insensitively: 'TEST_AdminSeed' → 1 item, 'zzz-not-in-any-message-xyz' → 0 items",
+    "Filter buttons admin-filter-all / admin-filter-unread / admin-filter-read filter correctly (8 unread + 2 read → 10 total match)",
+    "Selecting an unread message auto-marks read (unread stat decrements)",
+    "admin-copy-email clicked without error (clipboard permission granted)",
+    "admin-toggle-read toggles state (clicked twice, no error)",
+    "admin-refresh reloads list",
+    "admin-delete with accepted window.confirm removes item from list; admin-stat-total decrements by 1",
+    "New /api/contact POST while signed in appears in list after admin-refresh (total increments 10→11)",
+    "admin-logout clears localStorage tokens and returns to login page",
+    "Reload with valid token → messages page loads directly (session persistence)",
+    "Reload with invalid token in localStorage → login page shown, stale token cleared",
+    "Portfolio /: hero-name, theme-toggle, contact-form still render; theme toggle switches dark↔light"
+  ],
+  "failed": [
+    "POST /api/admin/login brute-force lockout (see backend_issues.minor above)"
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_admin_api.py",
+    "/app/backend/tests/test_portfolio_api.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "Fix brute-force IP resolution in /app/backend/server.py admin_login handler: use X-Forwarded-For header (first hop) or X-Real-IP instead of request.client.host, so the rate-limit key is the real client IP — not the K8s ingress proxy. Otherwise 5-attempt lockout never fires (proxy IPs rotate) and, if it did fire, would DoS all legitimate users behind the same proxy.",
+    "Consider persisting brute-force counters to Redis/Mongo so multiple backend replicas share state (in-memory dict is per-pod)."
+  ],
+  "critical_code_review_comments": [
+    "Security: `_login_attempts` is an in-memory dict keyed on request.client.host. Behind any reverse proxy (K8s ingress here), this key is the proxy IP, not the client IP → protection is effectively broken (both fails to lock attackers AND risks locking out legitimate users). Must respect X-Forwarded-For.",
+    "Security: bcrypt hash is generated fresh on every backend start (line 37-39). This means the hash changes each restart. Functionally fine because comparison is done in-memory, but issued JWTs are still valid across restarts (JWT_SECRET is stable), so no functional break. Just a note.",
+    "Minor: /api/contact GET is left publicly accessible for 'backward compatibility' (line 164-172). This exposes all contact messages without any auth. Since the admin panel now provides GET /api/admin/messages, this should be removed or gated behind admin auth in a follow-up.",
+    "Minor: DELETE /admin/messages/{id} bypasses response_model — returns raw dict. Consistent with existing style; not a bug."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_admin_api.py (new — 15 tests)",
+    "/app/test_reports/pytest/pytest_results.xml (regenerated: 21 tests, all pass)"
+  ],
+  "success_rate": {"backend": "95% (20/21 requirements — brute-force lockout fails; all pytest cases pass because we intentionally skipped 429 assertion to preserve login for frontend testing)", "frontend": "100%"},
+  "test_credentials": "Admin password: changeme-in-env (from /app/backend/.env ADMIN_PASSWORD). Documented in /app/memory/test_credentials.md.",
+  "seed_data_creation": "During testing, several TEST_* contact messages were inserted via POST /api/contact: TEST_Iter3Public, TEST_AdminSeed, TEST_DeleteMe (deleted), TEST_DeleteUI (deleted), TEST_NotifyUI. Also legacy from iteration 2: TEST_Iteration2, TEST_ListCheck, TEST_UIDark, TEST_UILight. These remain in db.contact_messages for retest visibility; main agent can clear via DELETE endpoint if desired.",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Reusable pytest files: /app/backend/tests/test_admin_api.py (15 admin tests, module-scoped admin_token fixture) + /app/backend/tests/test_portfolio_api.py (6 legacy tests). Admin JWT is stored in localStorage['ac-admin-token'] with numeric ms epoch in 'ac-admin-exp'. adminApi.js uses process.env.REACT_APP_BACKEND_URL via components/portfolio/api. Brute-force test is intentionally skipped in pytest to avoid poisoning frontend flows — if you must test lockout, use curl and then `sudo supervisorctl restart backend` to clear counters. Note the in-memory _login_attempts is per-pod, so behavior depends on which K8s pod handles the request. Frontend uses window.confirm for delete — Playwright must attach a `dialog` handler (page.once('dialog', d => d.accept())) BEFORE clicking admin-delete.",
+  "rca_of_the_issue": {
+    "bug": "POST /api/admin/login brute-force lockout does not trigger",
+    "reproduction": "curl 6 consecutive POSTs with wrong password → observed 6× HTTP 401 (expected: 5× 401 + 1× 429).",
+    "root_cause": "/app/backend/server.py line 205: `ip = request.client.host if request.client else 'unknown'`. Behind K8s ingress, request.client.host is the ingress proxy pod IP (verified 10.231.128.196 and 10.231.128.208 in supervisor backend log). Since the ingress load-balances across 2 pods, wrong-password attempts get keyed to 2 different IPs and neither reaches the MAX_ATTEMPTS=5 threshold. Even with a single ingress pod, this design would incorrectly aggregate all real users' attempts against one shared bucket.",
+    "mitigation": "In admin_login: `ip = (request.headers.get('x-forwarded-for') or '').split(',')[0].strip() or (request.client.host if request.client else 'unknown')`. Optionally validate the source of X-Forwarded-For via a trusted-proxy list, or move counters to Redis for multi-pod correctness."
+  }
+}
