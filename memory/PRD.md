@@ -24,15 +24,23 @@ Design: Dark minimal `#0A0A0A` + electric cyan `#00E5FF`. Mono/sans pairing. Sub
 
 ## What's Been Implemented (2025-12)
 - Hero with animated grid + radial cyan glow, name/title/tagline/two CTAs
+- **Enhanced hero (v2)**: kinetic letter reveal, rotating role subtitle, cursor spotlight, floating orbs, scan line, tech ticker marquee, keyboard hint
+- **Light theme toggle** with localStorage persistence (dark default) — CSS-var-driven, `[data-theme='light']` overrides
 - About with stats card + resume download
 - Skills (4 groups × 6 items, hover cyan)
 - Projects (5 cards, cursor-tracking radial glow, GitHub + Demo links, abstract dark imagery)
 - Experience vertical timeline (4 roles, glowing cyan dots)
 - Contact form (name/email/message) + social block + status block; sonner toast feedback
 - Backend `POST /api/contact` stores in MongoDB + best-effort Resend email
-- Backend `GET /api/contact` admin list endpoint
+- **Refactor**: Portfolio.jsx split into `/components/portfolio/*` modules (Nav, Hero, About, Skills, Projects, Experience, Contact, Footer, SectionHeading, hooks, constants, api)
+- **Admin panel** at `/admin/messages`:
+  - JWT-based auth (bcrypt-hashed password from `ADMIN_PASSWORD`, 2h expiry), brute-force lockout (5 fails / 15 min per IP, respects X-Forwarded-For)
+  - Inbox list + detail split view, unread badge, filters (all/unread/read), full-text search
+  - Actions: auto-mark-read on select, copy email to clipboard, mark read/unread toggle, delete with confirm, reply via `mailto:`
+  - Polling every 30s for new messages + toast notification + browser Notification API
+  - Session persistence + auto-logout on token expiry / 401
 - Footer with social icons
-- Sticky nav with scroll-blur backdrop
+- Sticky nav with scroll-blur backdrop + theme toggle
 - Smooth scroll, IntersectionObserver reveal animations, grain overlay, custom scrollbar
 
 ## Prioritized Backlog

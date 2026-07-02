@@ -51,6 +51,34 @@ api_router = APIRouter(prefix="/api")
 security = HTTPBearer(auto_error=False)
 
 
+# ------------------ Admin Auth Helpers (must be defined before route deps use them) ------------------
+
+def _require_admin(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    if credentials is None or credentials.scheme.lower() != "bearer":
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    try:
+        payload = jwt.decode(credentials.credentials, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        if payload.get("role") != "admin":
+            raise HTTPException(status_code=401, detail="Invalid token")
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    return True
+
+
+def _check_bruteforce(ip: str):
+    now = time.time()
+    attempts = [t for t in _login_attempts.get(ip, []) if now - t < LOCKOUT_WINDOW]
+    _login_attempts[ip] = attempts
+    if len(attempts) >= MAX_ATTEMPTS:
+        raise HTTPException(status_code=429, detail="Too many failed attempts. Try again in 15 minutes.")
+
+
+def _record_failed_attempt(ip: str):
+    _login_attempts.setdefault(ip, []).append(time.time())
+
+
 # ------------------ Models ------------------
 class StatusCheck(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -162,8 +190,8 @@ async def submit_contact(payload: ContactCreate):
 
 
 @api_router.get("/contact", response_model=List[ContactMessage])
-async def list_contacts(_: bool = Depends(lambda: True)):
-    """Deprecated: kept for backward compatibility. Prefer /admin/messages."""
+async def list_contacts(_: bool = Depends(_require_admin)):
+    """Admin-only. Prefer /admin/messages — this remains for backward compatibility."""
     rows = await db.contact_messages.find({}, {"_id": 0}).sort("timestamp", -1).to_list(500)
     for r in rows:
         if isinstance(r.get('timestamp'), str):
@@ -172,37 +200,15 @@ async def list_contacts(_: bool = Depends(lambda: True)):
     return rows
 
 
-# ------------------ Admin Auth ------------------
-
-def _require_admin(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    if credentials is None or credentials.scheme.lower() != "bearer":
-        raise HTTPException(status_code=401, detail="Not authenticated")
-    try:
-        payload = jwt.decode(credentials.credentials, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        if payload.get("role") != "admin":
-            raise HTTPException(status_code=401, detail="Invalid token")
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token expired")
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    return True
-
-
-def _check_bruteforce(ip: str):
-    now = time.time()
-    attempts = [t for t in _login_attempts.get(ip, []) if now - t < LOCKOUT_WINDOW]
-    _login_attempts[ip] = attempts
-    if len(attempts) >= MAX_ATTEMPTS:
-        raise HTTPException(status_code=429, detail="Too many failed attempts. Try again in 15 minutes.")
-
-
-def _record_failed_attempt(ip: str):
-    _login_attempts.setdefault(ip, []).append(time.time())
-
+# ------------------ Admin Endpoints ------------------
 
 @api_router.post("/admin/login", response_model=AdminLoginResponse)
 async def admin_login(payload: AdminLoginRequest, request: Request):
-    ip = request.client.host if request.client else "unknown"
+    # Respect X-Forwarded-For behind reverse proxies (K8s ingress).
+    xff = (request.headers.get('x-forwarded-for') or '').split(',')[0].strip()
+    ip = xff or (request.headers.get('x-real-ip') or '').strip() or (
+        request.client.host if request.client else "unknown"
+    )
     _check_bruteforce(ip)
 
     if not bcrypt.checkpw(payload.password.encode('utf-8'), ADMIN_PASSWORD_HASH.encode('utf-8')):
